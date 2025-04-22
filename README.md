@@ -39,6 +39,7 @@ python deep_learning.py
 > [!NOTE]
 > The KNN Regressor model creates embeddings which are saved and used to make predictions, however the feedback mechanism requires retraining which is performed to update the model. The deep learning model works in a similar fashion but feedback was not implemented due to computational overhead.
 
+> [!NOTE]
 > Another thing to mention is that most of the data besides auto_events.csv is
 synthetically generated due to a lack of data and no user base for collection.
 
