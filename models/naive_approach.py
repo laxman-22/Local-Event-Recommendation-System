@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
+from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import ndcg_score, mean_squared_error
 import ast
 
@@ -26,6 +26,7 @@ def train_and_evaluate_naive():
     tags_df = pd.DataFrame(tags_encoded, columns=mlb.classes_)
     merged_with_tags = pd.concat([merged_df[["User ID", "Activity ID", "Rating"]], tags_df], axis=1)
 
+    # Calculate the average rating per tag for events based on the sample user ratings file and simply return those for all users
     tag_columns = tags_df.columns
     tag_means = {}
     for tag in tag_columns:
@@ -54,6 +55,9 @@ def train_and_evaluate_naive():
     print("Average NDCG:", average_ndcg)
 
 def recommend_naive(user_id, top_n=5):
+    """
+    Sample inference function to showcase prediction methods
+    """
     global tag_means, mlb, merged_df
 
     if merged_df is None or mlb is None:
@@ -68,7 +72,7 @@ def recommend_naive(user_id, top_n=5):
 
     tag_vectors = mlb.transform(unrated_df["Tags"])
     tag_columns = mlb.classes_
-
+    # Function used to calculate rating prediction for the tags vector
     def predict_tags(tags_vector):
         tags = [tag_columns[i] for i, val in enumerate(tags_vector) if val == 1]
         return np.mean([tag_means.get(tag, 0) for tag in tags]) if tags else 3.0

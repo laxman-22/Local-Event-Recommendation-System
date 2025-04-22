@@ -24,6 +24,7 @@ def train_and_evaluate_knn():
     """
     Performs training and evaluation of KNN
     """
+    # Preprocessing
     df = pd.read_csv(DATA_PATH)
     user_ratings_df = pd.read_csv(RATINGS_PATH)
     df["Tags"] = df["Tags"].apply(ast.literal_eval)
@@ -45,6 +46,7 @@ def train_and_evaluate_knn():
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
 
+    # Training
     model = KNeighborsRegressor(n_neighbors=5)
     model.fit(X_train_scaled, y_train)
 
@@ -60,6 +62,7 @@ def train_and_evaluate_knn():
     embeddings = scaler.transform(activity_features_matrix.drop(columns=["Activity ID"], errors='ignore'))
     activity_names = [activity_id_to_name[aid] for aid in activity_features_matrix.index]
 
+    # Use embeddings for eval NDCG
     sim_matrix = cosine_similarity(embeddings)
     sim_df = pd.DataFrame(sim_matrix, index=activity_names, columns=activity_names)
 
@@ -85,6 +88,7 @@ def cold_start_recommend(profile, top_n=5):
     activity_map = pd.read_csv(ACTIVITY_MAP_PATH)
     id_to_name = dict(zip(activity_map["Activity ID"], activity_map["Activity Name"]))
 
+    # Build user profile data structure
     mlb = MultiLabelBinarizer(classes=profile["tags_all_possible"])
     mlb.fit([[]])
     tag_vector = mlb.transform([profile["selected_tags"]])[0]
@@ -104,7 +108,7 @@ def cold_start_recommend(profile, top_n=5):
     user_vector_scaled = scaler.transform([user_vector])
     all_scaled = scaler.transform(activity_features.values)
 
-    # Compute cosine similarity
+    # Compute cosine similarity to find similar items
     similarities = cosine_similarity(user_vector_scaled, all_scaled).flatten()
 
     activity_ids = activity_features.index.tolist()
@@ -130,6 +134,7 @@ def recommend(user_id, top_n=5):
     user_ratings_df["Activity Name"] = user_ratings_df["Activity ID"].map(activity_id_to_name)
 
     group = user_ratings_df[user_ratings_df["User ID"] == user_id]
+    # Use historical ratings to find out good items any rating is relatively positive but it can be interpreted differently by each person
     liked = group[group["Rating"] >= 0]["Activity Name"]
 
     liked_ids = [activity_name_to_id[name] for name in liked if name in activity_name_to_id]
@@ -145,6 +150,7 @@ def recommend(user_id, top_n=5):
 
     sims = cosine_similarity(user_profile_scaled, all_scaled).flatten()
     sim_scores = list(zip(all_names, sims))
+    # Deduplication
     already_seen = set(group["Activity Name"])
     recommendations = [(name, score) for name, score in sim_scores if name not in already_seen]
 
@@ -162,6 +168,7 @@ def update_model(user_id: int, activity_name: str, rating: float):
     if os.path.exists(RATINGS_PATH):
         ratings_df = pd.read_csv(RATINGS_PATH)
 
+    # Update the rating of the current activity ID
     ratings_df = ratings_df[
         ~((ratings_df["User ID"] == user_id) & (ratings_df["Activity ID"] == activity_id))
     ]

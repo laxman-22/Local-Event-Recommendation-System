@@ -9,6 +9,7 @@ import json
 load_dotenv(find_dotenv())
 
 def main():
+    """ Used to interpolate some data in the auto_events.csv dataset using gemini"""
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
     activities = [

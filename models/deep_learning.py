@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+# Define Architecture
 class Autoencoder(nn.Module):
         def __init__(self, input_dim, encoding_dim=32):
             super(Autoencoder, self).__init__()
@@ -31,11 +32,15 @@ class Autoencoder(nn.Module):
             return decoded
 
 def train_and_evaluate():
+    """
+    Run training and evaluation processes
+    """
     # Load data
     df = pd.read_csv("../data/processed/auto_events.csv")
     user_ratings_df = pd.read_csv("../data/processed/sample_user_ratings.csv")
     df["Tags"] = df["Tags"].apply(ast.literal_eval)
 
+    # Handle tag format according to dataset
     mlb = MultiLabelBinarizer()
     tags_encoded = mlb.fit_transform(df["Tags"])
 
@@ -59,6 +64,7 @@ def train_and_evaluate():
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+    # Training loop
     epochs = 100
     for epoch in range(epochs):
         model.train()
@@ -84,6 +90,7 @@ def train_and_evaluate():
         all_tensor = torch.tensor(features, dtype=torch.float32)
         embeddings = model.encoder(all_tensor).numpy()
 
+    # Use embeddings to make rating predictions and provide NDCG rankings
     embedding_sim_matrix = cosine_similarity(embeddings)
     embedding_sim_df = pd.DataFrame(embedding_sim_matrix, index=activity_names, columns=activity_names)
 
@@ -112,6 +119,9 @@ def train_and_evaluate():
     print(f"Test Reconstruction Loss: {test_loss.item():.4f}")
 
 def recommend_for_user(user_id, top_n=5):
+    """
+    Sample inference function to showcase how predictions are made
+    """
     df = pd.read_csv("../data/processed/auto_events.csv")
     user_ratings_df = pd.read_csv("../data/processed/sample_user_ratings.csv")
     df["Tags"] = df["Tags"].apply(ast.literal_eval)
@@ -167,5 +177,5 @@ if __name__ == "__main__":
     train_and_evaluate()
 
     print("\nRecommendations for user 1:")
-    for rec in recommend_for_user(2):
+    for rec in recommend_for_user(1):
         print(f"{rec[0]} (score: {rec[1]:.3f})")
